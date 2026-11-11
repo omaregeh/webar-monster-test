@@ -1,0 +1,6 @@
+.venv/
+incoming/
+tools/node_modules/
+tools/test_images/
+__pycache__/
+*.pyc

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16121f">
+  <meta name="color-scheme" content="dark">
+  <title>Monster AR test</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%91%BE%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+    { "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+    } }
+  </script>
+</head>
+<body>
+  <!-- AR view: fixed full-screen camera video with the 3D canvas on top -->
+  <div id="stage" aria-hidden="true">
+    <video id="video" playsinline muted autoplay disablepictureinpicture></video>
+    <canvas id="gl"></canvas>
+  </div>
+
+  <!-- "Look back at the marker!" overlay with the monster in a corner -->
+  <div id="lost" class="fade">
+    <div class="bubble">Look back at the marker!</div>
+    <canvas id="lostgl" width="160" height="200"></canvas>
+  </div>
+
+  <div id="hint" class="fade">Swipe up for full screen &uarr;</div>
+  <div id="credit">Monster: &ldquo;Blue Demon&rdquo; by Quaternius (CC0)</div>
+
+  <!-- Tap the top-left corner to toggle the debug read-out -->
+  <button id="debugHit" type="button" aria-label="Toggle debug info"></button>
+  <pre id="debug" hidden></pre>
+
+  <!-- Start screen -->
+  <section id="start" class="screen">
+    <div class="card">
+      <h1>Monster AR</h1>
+      <p>Print a marker sheet, tap <b>Start AR</b>, then point your camera at the black-and-white square.</p>
+      <button id="startBtn" class="big" type="button" disabled>Loading&hellip;</button>
+      <p class="small">The camera turns on only after you tap.</p>
+      <p class="small">Need the markers? <a href="markers/markers.pdf">Download markers.pdf</a><br>
+        (print at 100% / Actual size).</p>
+    </div>
+  </section>
+
+  <!-- Friendly error / info screen -->
+  <section id="message" class="screen" hidden>
+    <div class="card">
+      <div class="icon" id="msgIcon">!</div>
+      <h2 id="msgTitle"></h2>
+      <div id="msgBody"></div>
+      <div class="row">
+        <button id="msgRetry" class="big" type="button">Try again</button>
+        <button id="msgAlt" class="link" type="button" hidden></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Makes the page a little taller than the screen, so scrolling down
+       collapses Safari's toolbar and scrolling up brings it back. -->
+  <div id="scroller"></div>
+
+  <noscript><p style="padding:2rem">This page needs JavaScript turned on.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

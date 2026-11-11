@@ -1,0 +1,8 @@
+{
+  "name": "webar-monster-tools",
+  "private": true,
+  "description": "Dev-only: runs the browser marker detector in Node to verify the printed markers.",
+  "devDependencies": {
+    "pngjs": "7.0.0"
+  }
+}
