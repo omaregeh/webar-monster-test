@@ -14,6 +14,13 @@ const CAMERA_LONG_SIDE_FOV_DEG = 67;
 const DETECT_WIDTH = 640;          // detection runs on a frame this many px wide
 const LOST_AFTER_MS = 500;         // hide the monster after this long without the marker
 const MONSTER_HEIGHT_IN_MARKER_WIDTHS = 1.5;
+// Where the printed sheet is: 'wall' = taped upright on a wall (text at the
+// bottom), 'table' = lying flat. On a wall the monster stands upright in front
+// of the sheet, facing out of the wall towards you.
+const MARKER_MOUNT = 'wall';
+// Wall mode: height of the monster's feet, in marker widths from the marker's
+// centre. -0.5 = bottom edge of the black square.
+const WALL_FEET_AT = -0.5;
 const MONSTER_URL = 'models/monster.glb';
 // One Euro smoothing (see js/oneeuro.js). Position is measured in marker widths.
 const POS_FILTER = { minCutoff: 0.8, beta: 2.0, dCutoff: 1.0 };
@@ -118,7 +125,7 @@ function hasWebGL() {
 // ---------- 3D scene ----------
 let renderer, scene, camera3d, anchor, monsterHolder, mainMixer, mainMaterials = [], shadowBlob;
 let lostRenderer, lostScene, lostCamera, lostMixer;
-let modelHeight = 1;
+let modelHeight = 1, modelBackZ = 0, modelDepth = 1;
 let lastFrameMs = performance.now();
 
 async function initThree() {
@@ -137,10 +144,11 @@ async function initThree() {
   anchor.matrixAutoUpdate = true;
   anchor.visible = false;
   scene.add(anchor);
-  // holder turns the Y-up model so it stands on the paper (Y -> marker +Z) and
-  // faces the bottom edge of the printed page (where you usually stand).
+  // holder orients the Y-up, +Z-facing model relative to the marker:
+  //  wall:  model up = top of the page (marker +Y), facing out of the wall (+Z)
+  //  table: model up = out of the paper (marker +Z), facing the page's bottom edge
   monsterHolder = new THREE.Group();
-  monsterHolder.rotation.x = Math.PI / 2;
+  if (MARKER_MOUNT === 'table') monsterHolder.rotation.x = Math.PI / 2;
   anchor.add(monsterHolder);
 
   const gltf = await new GLTFLoader().loadAsync(MONSTER_URL);
@@ -162,6 +170,8 @@ async function initThree() {
   main.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(main);
   modelHeight = Math.max(0.001, box.max.y - Math.min(0, box.min.y));
+  modelBackZ = Math.max(0, -box.min.z);  // how far the model reaches behind its feet
+  modelDepth = box.max.z - box.min.z;
   monsterHolder.add(main);
 
   // soft round shadow under the feet
@@ -175,7 +185,6 @@ async function initThree() {
   g.fillRect(0, 0, 128, 128);
   shadowBlob = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
     new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false }));
-  shadowBlob.position.z = 0.0005;
   anchor.add(shadowBlob);
   mainMaterials.push(shadowBlob.material);
 
@@ -206,6 +215,26 @@ async function initThree() {
   lostCamera = new THREE.PerspectiveCamera(30, 160 / 200, 0.1, 100);
   lostCamera.position.set(0, h * 0.55, h * 3.4);
   lostCamera.lookAt(0, h * 0.48, 0);
+}
+
+// Size and position the monster (and its soft shadow) for a marker of `size` metres.
+function placeMonster(size) {
+  const s = (MONSTER_HEIGHT_IN_MARKER_WIDTHS * size) / modelHeight;
+  monsterHolder.scale.setScalar(s);
+  if (MARKER_MOUNT === 'table') {
+    monsterHolder.position.set(0, 0, 0);
+    shadowBlob.rotation.set(0, 0, 0);
+    shadowBlob.position.set(0, 0, 0.0005);
+    shadowBlob.scale.set(size * 0.9, size * 0.9, 1);
+  } else {
+    // Wall: feet at the bottom edge of the black square, back just off the wall.
+    const feetY = WALL_FEET_AT * size;
+    monsterHolder.position.set(0, feetY, modelBackZ * s + 0.002);
+    // Shadow on an invisible "floor" under the feet, sticking out of the wall.
+    shadowBlob.rotation.set(-Math.PI / 2, 0, 0);
+    shadowBlob.position.set(0, feetY + 0.0005, modelBackZ * s);
+    shadowBlob.scale.set(size * 1.0, modelDepth * s * 0.9, 1);
+  }
 }
 
 function setMonsterOpacity(a) {
@@ -326,9 +355,7 @@ function onWorkerMessage(e) {
   anchor.quaternion.set(q[0], q[1], q[2], q[3]).normalize();
   lastQ = anchor.quaternion.clone();
 
-  const sMon = (MONSTER_HEIGHT_IN_MARKER_WIDTHS * size) / modelHeight;
-  monsterHolder.scale.setScalar(sMon);
-  shadowBlob.scale.setScalar(size * 0.9);
+  placeMonster(size);
 
   Object.assign(track, { id: m.id, name: m.name, sizeMm: m.sizeMm, distCm: Math.hypot(...t) * 100, rms: pose.rmsPx, hamming: m.hamming });
 }

@@ -17,7 +17,7 @@ Print a sheet, scan its QR code with an iPhone, and an animated 3D monster stand
    | 3 – Small  | 2 | 50 mm  |
 
 4. From the 4 corners of the square, plus its real size and the camera's field of view, it works out where the paper is in 3D. A "One Euro" filter smooths out the jitter.
-5. The monster is drawn on top of the camera picture, about 1.5× the marker width tall.
+5. The monster is drawn on top of the camera picture, about 1.5× the marker width tall. By default the sheet is expected to be **taped upright on a wall**, with the text at the bottom. The monster then stands upright in front of the sheet, feet at the bottom edge of the black square, facing out of the wall towards you.
 6. If it loses the marker for half a second, the monster disappears and a small monster in the corner says **"Look back at the marker!"**.
 
 Tap the **top-left corner** of the screen to show or hide the debug panel (FPS, marker ID, size, distance).
@@ -28,10 +28,13 @@ Tap the **top-left corner** of the screen to show or hide the debug panel (FPS, 
 - After printing, measure the ruler line at the bottom of the page with a real ruler: it must be exactly **100 mm**. If it isn't, the distance shown in the debug panel will be off. Re-print with scaling set to 100%.
 - Matte paper works better than glossy paper, because glossy paper reflects light.
 - Keep the white border around the black square. Don't trim into it.
+- Tape the sheet **upright on a wall with the text at the bottom**, and keep it flat (no bulges). If the sheet is crooked, the monster will lean the same way.
 
 ## Tweaking
 All the easy settings are at the top of [`js/app.js`](js/app.js):
 - `CAMERA_LONG_SIDE_FOV_DEG` (default 67): the iPhone 16 main camera's field of view. If the debug distance reads too **far**, make this number a bit smaller. If it reads too **close**, make it a bit bigger.
+- `MARKER_MOUNT`: `'wall'` (default) or `'table'` (sheet lying flat, monster standing on it).
+- `WALL_FEET_AT`: where the monster's feet go on a wall, in marker widths from the centre (`-0.5` = bottom edge of the black square).
 - `LOST_AFTER_MS`, `MONSTER_HEIGHT_IN_MARKER_WIDTHS`, `DETECT_WIDTH`, and the smoothing settings.
 
 ## Files
